@@ -1,6 +1,5 @@
 import numpy as np
-from find_roots import *
-
+from bin.roots_separation import *
 
 def main():
     coeff = np.array([1, 3, 0, -1])
