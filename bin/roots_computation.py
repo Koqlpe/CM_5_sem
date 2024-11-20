@@ -1,8 +1,8 @@
 import numpy as np
 from method import Method
 
-min = float('nan') # Минимальное значение производной
-max = float('nan') # Максимальное значение производной
+min = float('nan') # Минимальное значение производной.
+max = float('nan') # Максимальное значение производной.
 
 def calculation(f: np.poly1d, intervals: list, tolerance, method: Method):
     roots = [] # Список для записи корней уравнения
@@ -13,7 +13,7 @@ def calculation(f: np.poly1d, intervals: list, tolerance, method: Method):
         # Выбор метода.
         if method == Method.bisection:
             x = bisection(f, interval, tolerance)
-        elif method == Method.simple_iteration:
+        elif method == Method.simple_iteration:              
             x = simple_iteration(f, interval, tolerance)
         elif method == Method.newton:
             x = newton(f, interval, tolerance)
@@ -60,7 +60,7 @@ def find_min_max_derivative_of(f: np.poly1d, interval: np.array):
     f_der = np.polyder(f)
     a = interval[0]
     b = interval[1]
-    h = 0.00001 # Шаг (произвольный)
+    h = 0.01 # Шаг (произвольный)
 
     x = a
     while (x <= b):
@@ -76,10 +76,15 @@ def find_min_max_derivative_of(f: np.poly1d, interval: np.array):
             min = y
         if (y > max):
             max = y
-    x += h
+        
+        x += h
 
 def g(x, f: np.poly1d):
-    return x - (2 * f(x))/(min + max)
+    l = 2/(min + max)
+    f_der = np.polyder(f)
+    if (f_der(x) > 0):
+        l *= -1
+    return x + l * f(x)
     
 def newton_f(x, f: np.poly1d, f_der: np.poly1d):
     return x - (f(x)/f_der(x))
@@ -92,14 +97,13 @@ def simple_iteration(f: np.poly1d, interval: np.array, tol):
     find_min_max_derivative_of(f, interval)
     a = interval[0]
     b = interval[1]
-    h = 0.00001
-    x0 = a
+    #h = 0.0001
+    x0 = (a + b)/2
     x1 = g(x0, f)
-    while (abs(x1 - x0) < tol):
+    delta = (max + min)/(2 * min) * abs(x1 - x0)
+    while (delta < tol):
         x0 = x1
-        x1 = g(x0, f)
-        if (x1 == b + h):
-            raise Exception("Уравнение не сходится на [{a},{b}]!".format(a, b))
+        x1 = g(x0, f)  
     return x1
 
 # Метод Ньютона (метод касательных).

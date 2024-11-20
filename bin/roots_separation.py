@@ -43,15 +43,12 @@ def z(coeff: np.ndarray):
     
     return np.array(z_coeff)
         
-
-
 # Пересечение интервалов из метода 1 и метода 2.
 def intersect_interval(interval1, interval2):
     return np.array([interval1[0], interval2[1]])
 
 def find_interval(coeff: np.ndarray):
     return intersect_interval(method1(coeff), method2(coeff))
-
 
 # Отсюда начинается применение метода Штурма.
 # Поиск системы (последовательности) Штурма.

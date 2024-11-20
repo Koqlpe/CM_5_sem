@@ -11,11 +11,12 @@ def main():
     #interval = z(coeff3)
     #print(method2(interval))
 
+    range = np.array([-4,2])
     roots = find_sturm_system(coeff)
-    intervals = sturm_method(roots, np.array([-4,2]))
+    intervals = sturm_method(roots, range)
 
     f = np.poly1d(coeff)
-    tolerance = 0.05
+    tolerance = 0.01
     r = calculation(f, intervals, tolerance, Method.simple_iteration)
     print(r)
 
