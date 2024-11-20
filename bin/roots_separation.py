@@ -1,5 +1,7 @@
 import numpy as np
 
+# Поиск границ расположения корней алгебраического уравнения.
+# Метод 1: даёт интервал.
 def method1(coef: np.ndarray):
     coef_abs = np.absolute(coef)
     n = coef.size - 1
@@ -10,6 +12,7 @@ def method1(coef: np.ndarray):
     rigth = a/coef_abs[0]
     return np.array([left, rigth])
 
+# Метод 2: даёт верхнюю границу для положительных корней.
 def method2(coef: np.ndarray):
     if coef[0] < 0 : coef * -1
     a = np.max(coef[coef < 0])
@@ -18,26 +21,30 @@ def method2(coef: np.ndarray):
     rigth = 1 + (a/coef[0]) ** (1/m)
     return np.array([0, rigth])
 
+# Пересечение интервалов из метода 1 и метода 2.
 def intersect_interval(interval1, interval2):
     return np.array([interval1[0], interval2[1]])
 
-def separate_roots(coeff: np.ndarray):
+# Отсюда начинается применение метода Штурма.
+# Поиск системы (последовательности) Штурма.
+def find_sturm_system(coeff: np.ndarray):
     n = coeff.size
     
     f = np.poly1d(coeff)
     der = np.polyder(f)
-    eqs = {0 : f, 1 : der/der.c[0]}
+    sturm_system = {0 : f, 1 : der/der.c[0]}
 
     for i in range(2, n):
-        a = eqs.get(i-2)
-        b = eqs.get(i-1)
+        a = sturm_system.get(i-2)
+        b = sturm_system.get(i-1)
         
         fi = np.polydiv(a, b)[1]
-        eqs[i] = fi/abs(fi.c[0]) * -1
+        sturm_system[i] = fi/abs(fi.c[0]) * -1
     
-    return eqs
-        
-def count_roots(fs: dict, interval: np.ndarray):
+    return sturm_system
+
+# Метод Штурма для подсчёта числа действительных корней.
+def sturm_method(fs: dict, interval: np.ndarray):
     roots_amount = {}
     step = 1
     for i in range(interval[0], interval[1] + step, step):
