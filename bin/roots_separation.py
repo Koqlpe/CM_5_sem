@@ -2,28 +2,56 @@ import numpy as np
 
 # Поиск границ расположения корней алгебраического уравнения.
 # Метод 1: даёт интервал.
-def method1(coef: np.ndarray):
-    coef_abs = np.absolute(coef)
-    n = coef.size - 1
-    a = np.max(np.delete(coef_abs, 0, None))
-    a_ = np.max(np.delete(coef_abs, n, None))
+def method1(coeff: np.ndarray):
+    coeff_abs = np.absolute(coeff)
+    n = coeff.size - 1
+    a = np.max(np.delete(coeff_abs, 0, None))
+    a_ = np.max(np.delete(coeff_abs, n, None))
 
-    left = coef_abs[n]/(a_ + coef_abs[n])
-    rigth = a/coef_abs[0]
+    left = coeff_abs[n]/(a_ + coeff_abs[n])
+    rigth = 1 + a/coeff_abs[0]
     return np.array([left, rigth])
 
 # Метод 2: даёт верхнюю границу для положительных корней.
-def method2(coef: np.ndarray):
-    if coef[0] < 0 : coef * -1
-    a = np.max(coef[coef < 0])
-    m = np.argwhere(coef < 0)[0]
+def method2(coeff: np.ndarray):
+    if coeff[0] < 0 : coeff * -1
+    coeff_negative = np.absolute(coeff[coeff < 0])
+    a = np.max(coeff_negative)
+    m = np.argwhere(coeff < 0)[0].item()
 
-    rigth = 1 + (a/coef[0]) ** (1/m)
-    return np.array([0, rigth])
+    # Сделать обработчик, если какие-то корни не найдены, продолжить дальше.
+    if (m == 0):
+        raise Exception(
+            "Деление на ноль! Предположительно, корней положительных/отрицательныхнет.")
+
+    rigth = 1 + (a/coeff[0]) ** (1/m)
+    left = 0
+    if (rigth != 0):
+        left = 1/rigth
+    return np.array([left, rigth])
+
+def z(coeff: np.ndarray):
+    n = coeff.size - 1
+    z_coeff = []
+
+    for c in coeff:
+        z = c
+        if (n != 0 and n % 2 != 0):
+            z *= -1
+        z_coeff.append(z)
+        n -= 1
+    
+    return np.array(z_coeff)
+        
+
 
 # Пересечение интервалов из метода 1 и метода 2.
 def intersect_interval(interval1, interval2):
     return np.array([interval1[0], interval2[1]])
+
+def find_interval(coeff: np.ndarray):
+    return intersect_interval(method1(coeff), method2(coeff))
+
 
 # Отсюда начинается применение метода Штурма.
 # Поиск системы (последовательности) Штурма.

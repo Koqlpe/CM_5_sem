@@ -5,3 +5,4 @@ class Method(Enum):
     bisection = auto()
     simple_iteration = auto()
     newton = auto()
+    secant = auto()
