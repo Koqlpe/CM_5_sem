@@ -2,86 +2,15 @@ import math
 import tkinter as tk
 from tkinter import messagebox, ttk
 import numpy as np
-import re
+from matplotlib.figure import Figure 
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,  
+NavigationToolbar2Tk)
+
+
+from equation_input import *
 from roots_separation import find_sturm_system, sturm_method
 from method import Method
 from roots_computation import calculation
-
-# Функция для проверки ввода уравнения.
-def validate_equation_input(equation):
-    if re.match(r'^[x0-9\^\+\-\*\(\)]*$', equation):
-        return True
-    else:
-        return False
-
-# Функция для разбора коэффициентов из уравнения.
-def parse_coefficients(equation):
-    # Удаление лишних пробелов.
-    equation = equation.replace(" ", "")
-    # Добавить "+" перед "-" для корректного разделения уравнения на члены.
-    equation = re.sub(r'(?<![\^\+\-])\-', '+-', equation)
-    terms = equation.split('+')  # Split terms by "+"
-    term_dict = {}
-
-    for term in terms:
-        # Debag: проверка одного члена.
-        print(f"Processing term: '{term}'")
-        if term.strip() == "":
-            continue  # Skip empty terms from splitting
-
-        # Сопоставление текущего члена уравнения со степенью (e.g., "x^4", "-6x^3")
-        # Без знака *.
-        match_power = re.match(r'^([\+\-]?\d*)x\^(\d+)$', term)
-        if match_power:
-            coefficient, power = match_power.groups()
-            coefficient = int(coefficient) if coefficient not in ('', '+', '-') else int(coefficient + '1')
-            power = int(power)
-            term_dict[power] = term_dict.get(power, 0) + coefficient
-            continue
-
-        # Со знаком *.
-        match_power = re.match(r'^([\+\-]?\d*)\*x\^(\d+)$', term)
-        if match_power:
-            coefficient, power = match_power.groups()
-            coefficient = int(coefficient) if coefficient not in ('', '+', '-') else int(coefficient + '1')
-            power = int(power)
-            term_dict[power] = term_dict.get(power, 0) + coefficient
-            continue
-
-        # Сопоставление текущего члена уравнения с нулевой степенью (e.g., "-8x", "x")
-        # Без знака *.
-        match_linear = re.match(r'^([\+\-]?\d*)x$', term)
-        if match_linear:
-            coefficient, = match_linear.groups()
-            coefficient = int(coefficient) if coefficient not in ('', '+', '-') else int(coefficient + '1')
-            power = 1
-            term_dict[power] = term_dict.get(power, 0) + coefficient
-            continue
-
-        # Со знаком *.
-        match_linear = re.match(r'^([\+\-]?\d*)\*x$', term)
-        if match_linear:
-            coefficient, = match_linear.groups()
-            coefficient = int(coefficient) if coefficient not in ('', '+', '-') else int(coefficient + '1')
-            power = 1
-            term_dict[power] = term_dict.get(power, 0) + coefficient
-            continue
-
-        # Сопоставление текущего члена - константы (e.g., "4", "-1")
-        try:
-            coefficient = int(term)
-            power = 0
-            term_dict[power] = term_dict.get(power, 0) + coefficient
-        except ValueError:
-            print(f"Failed to parse term: '{term}'")
-            raise ValueError(f"Invalid term format: '{term}'")
-
-    # Отсортировать коэффициенты по степени (от наибольшей до наименьшей).
-    max_power = max(term_dict.keys(), default = 0) # Степени
-    coefficients = [term_dict.get(i, 0) for i in range(max_power, -1, -1)] # Коэффициенты
-    elements = [f"x^{i}" if i > 1 else ("x" if i == 1 else "x^0") for i in range(max_power, -1, -1) if term_dict.get(i, 0) != 0]
-
-    return coefficients, elements
 
 # Основная функция для интерфейса
 class NonlinearEquationSolver:
@@ -99,6 +28,9 @@ class NonlinearEquationSolver:
         self.parse_button = tk.Button(root, text="Проверить уравнение", command=self.parse_equation)
         self.parse_button.grid(row=0, column=2, padx=5, pady=5)
 
+        self.plot_button = tk.Button(root, text="График", command=self.plot_equation)
+        self.plot_button.grid(row=1, column=2, padx=5, pady=5)
+
         # Поле для отображения коэффициентов
         self.coefficients_label = tk.Label(root, text="Коэффициенты уравнения:")
         self.coefficients_label.grid(row=1, column=0, padx=5, pady=5)
@@ -112,9 +44,10 @@ class NonlinearEquationSolver:
         self.elements_entry.grid(row=2, column=1, padx=5, pady=5)
 
         # Раскрывающийся список для выбора метода решения
-        self.method_label = tk.Label(root, text="Используемый метод решения:")
+        method_values = ["Метод половинного деления", "Метод простых итераций", "Метод Ньютона (метод касательных)", "Метод секущих"]
+        self.method_label = tk.Label(root, text="Метод решения:")
         self.method_label.grid(row=3, column=0, padx=5, pady=5)
-        self.method_combo = ttk.Combobox(root, values=["Метод половинного деления", "Метод простых итераций", "Метод Ньютона (метод касательных)", "Метод секущих"])
+        self.method_combo = ttk.Combobox(root, values=method_values, width=35)
         self.method_combo.grid(row=3, column=1, padx=5, pady=5)
 
         # Поле для ввода погрешности
@@ -142,12 +75,12 @@ class NonlinearEquationSolver:
             self.elements_entry.delete(0, tk.END)
             self.elements_entry.insert(0, ", ".join(elements))
         else:
-            messagebox.showerror("Ошибка ввода", "Не верный ввод символов. Используйте маленькую латинскую букву (x) и эти символы: запятая, циркумфлекс, плюс, минус, левая скобка, правая скобка. Исключите пробелы.")
+            messagebox.showerror("Ошибка ввода", "Неверный ввод символов. Используйте маленькую латинскую букву (x) и эти символы: запятая, циркумфлекс, плюс, минус, левая скобка, правая скобка. Исключите пробелы.")
 
     def solve_equation(self):
-        # Ensure all fields are filled
+        # Проверка заполнения корней
         if not self.equation_entry.get() or not self.error_entry.get() or not self.method_combo.get():
-            messagebox.showerror("Оошибка", "Заполните все поля и выберете метод решения.")
+            messagebox.showerror("Ошибка", "Заполните все поля и выберете метод решения.")
             return
 
         try:
@@ -155,23 +88,24 @@ class NonlinearEquationSolver:
             coefficients, _ = parse_coefficients(self.equation_entry.get())
             coeff = np.array(coefficients)
             print(coeff)
-            # Validate coefficients
+            # Проверка коэффициентов на Nan или Infinity.
             if np.any(np.isnan(coeff)) or np.any(np.isinf(coeff)):
                 raise ValueError("Обнаружены некорректные коэффициенты. Пожалуйста, проверьте входное уравнение.")
 
-            # Set tolerance
+            # Ввод погрешности.
             tolerance = float(self.error_entry.get())
 
-            # Validate tolerance
+            # Проверка корректности введённой погрешности.
             if tolerance <= 0:
                 raise ValueError("Погрешность должна быть положительным числом!")
 
-            # Find intervals using Sturm's method
+            range_interval = np.array([-100, 100])
+            
+            # Метод Штурма.
             roots = find_sturm_system(coeff)
-            print(roots)
-            range_interval = np.array([-100, 100])  # You can modify the range as needed
             intervals = sturm_method(roots, range_interval)
             print(intervals)
+            
             # Определение выбранного метода
             method_str = self.method_combo.get()
             if method_str == "Метод половинного деления":
@@ -183,22 +117,47 @@ class NonlinearEquationSolver:
             elif method_str == "Метод секущих":
                 method = Method.secant
             else:
-                raise ValueError("Invalid solving method selected.")
+                raise ValueError("Выбран несуществующий метод вычисления корней! (Скорее всего, он ещё не реализован. :)")
 
             # Create polynomial
             f = np.poly1d(coeff)
 
             # Print debug info for troubleshooting
-            print("Polynomial Coefficients:", coeff)
-            print("Polynomial:", f)
+            print("Коэффициенты полинома:", coeff)
+            print("Полином:", f)
 
-            # Calculate roots
+            # Вычисление корней.
             result = calculation(f, intervals, tolerance, method)
             self.solution_entry.delete(0, tk.END)
             self.solution_entry.insert(0, ", ".join(map(str, result)))
 
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Ошибка: ", str(e))
+
+    def plot_equation(self):
+            plot_window = tk.Tk()
+            plot_window.title("График функции")
+            plot_window.geometry("500x500")
+
+            fig = Figure(figsize = (5, 5), dpi = 100)
+            y = [i**2 for i in range(101)]
+            plot1 = fig.add_subplot(111)
+            plot1.plot(y) 
+  
+            # creating the Tkinter canvas 
+            # containing the Matplotlib figure 
+            canvas = FigureCanvasTkAgg(fig, master = plot_window)   
+            canvas.draw() 
+  
+            # placing the canvas on the Tkinter window 
+            canvas.get_tk_widget().pack() 
+  
+            # creating the Matplotlib toolbar 
+            toolbar = NavigationToolbar2Tk(canvas, plot_window) 
+            toolbar.update() 
+        
+            # placing the toolbar on the Tkinter window 
+            canvas.get_tk_widget().pack() 
 
 # Создаем основное окно программы
 root = tk.Tk()
