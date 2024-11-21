@@ -111,13 +111,10 @@ def newton(f: np.poly1d, interval: np.array, tol):
     f_der = np.polyder(f)
     a = interval[0]
     b = interval[1]
-    h = 0.00001
 
     x0 = a
     if np.sign(f(b)) == np.sign(f_der(b)):
-        a = interval[1]
-        b = interval[0]
-        h *= -1
+        x0 = b
     
     x1 = newton_f(x0, f, f_der)
     while(abs(x1 - x0) > tol):
@@ -127,13 +124,15 @@ def newton(f: np.poly1d, interval: np.array, tol):
 
 # Метод секущих (метод касательных).
 def secant(f: np.poly1d, interval: np.array, tol):
-    f_der = np.polyder(f)
     a = interval[0]
-    b = interval[1]
-    h = 0.00001
-
     x0 = a
-    while(abs(x1 - x0) > tol):
+    x1 = a + 10 * tol
+    x2 = 0
+    while True:
+        if (abs(x1 - x0) <= tol):
+            break
+        x2 = secant_f(x0, x1, f)
+
         x0 = x1
-        x1 = secant_f(x0, f, f_der)
+        x1 = x2
     return x1

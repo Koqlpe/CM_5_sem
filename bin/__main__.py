@@ -17,7 +17,7 @@ def main():
 
     f = np.poly1d(coeff)
     tolerance = 0.01
-    r = calculation(f, intervals, tolerance, Method.simple_iteration)
+    r = calculation(f, intervals, tolerance, Method.secant)
     print(r)
 
 if __name__ == "__main__":
