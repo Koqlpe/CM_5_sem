@@ -1,12 +1,10 @@
 import re
 import numpy as np
-import sympy
-
-f = float('nan')
+from sympy import sympify, symbols
 
 # Функция для проверки ввода уравнения.
 def validate_equation_input(equation):
-    if re.match(r'^[x0-9\^\+\-\*\(\)]*$', equation):
+    if re.match(r'^[x0-9\.\^\+\-\*\(\)]*$', equation):
         return True
     else:
         return False
@@ -15,7 +13,6 @@ def validate_equation_input(equation):
 def parse_coefficients(equation):
     # Удаление лишних пробелов.
     equation = equation.replace(" ", "")
-    f = equation
     # Добавить "+" перед "-" для корректного разделения уравнения на члены.
     equation = re.sub(r'(?<![\^\+\-])\-', '+-', equation)
     terms = equation.split('+')  # Split terms by "+"
@@ -81,12 +78,13 @@ def parse_coefficients(equation):
 
     return coefficients, elements
 
-def sympy_f():
-    global f
-    
-    if (np.isnan(f)):
-        raise ValueError(f"Введите уравнение!")
-    
-    f = f.replace('^', '**')
+def sympy_f(equation):
+    equation = equation.strip()
+    equation = re.sub(r'(?<=[0-9])x', '*x', equation)
+    f = equation.replace('^', '**')
+    x = symbols('x')
+    f = sympify(f)
+
+    return f
 
     

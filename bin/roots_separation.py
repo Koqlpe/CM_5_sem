@@ -45,7 +45,18 @@ def z(coeff: np.ndarray):
         
 # Пересечение интервалов из метода 1 и метода 2.
 def intersect_interval(interval1, interval2):
-    return np.array([interval1[0], interval2[1]])
+    interval = []
+    if (interval1[0] < interval2[0]):
+        interval.append(interval1[0])
+    else:
+        interval.append(interval2[0])
+
+    if (interval1[1] > interval2[1]):
+        interval.append(interval1[1])
+    else:
+        interval.append(interval2[1])
+    
+    return np.array(interval)
 
 def find_interval(coeff: np.ndarray):
     return intersect_interval(method1(coeff), method2(coeff))
