@@ -79,7 +79,7 @@ def parse_coefficients(equation):
     return coefficients, elements
 
 def sympy_f(equation):
-    equation = equation.strip()
+    equation = equation.replace(" ", "")
     equation = re.sub(r'(?<=[0-9])x', '*x', equation)
     f = equation.replace('^', '**')
     x = symbols('x')

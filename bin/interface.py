@@ -21,7 +21,7 @@ class NonlinearEquationSolver:
         # Поле для ввода уравнения
         self.equation_label = tk.Label(root, text="Уравнение F(x)=")
         self.equation_label.grid(row=0, column=0, padx=5, pady=5)
-        self.equation_entry = tk.Entry(root, width=35)
+        self.equation_entry = tk.Entry(root, width=40)
         self.equation_entry.grid(row=0, column=1, padx=5, pady=5)
 
         # Кнопка для проверки ввода и парсинга
@@ -33,15 +33,15 @@ class NonlinearEquationSolver:
         self.equation_typy_label.grid(row=1, column=2, padx=5, pady=5)
         self.algebraic = "Алгебраическое"
         self.transcendental = "Трансцедентное"
-        self.equation_type = tk.StringVar() # Маяк вида уравнения
-        self.alg_radiobutton = tk.Radiobutton(root, text=self.transcendental, variable=self.equation_type, value=self.transcendental, command=self.choose_equation_type)
-        self.alg_radiobutton.grid(row=3, column=2, padx=5)
+        self.equation_type = tk.StringVar(None, self.algebraic) # Маяк вида уравнения
         self.alg_radiobutton = tk.Radiobutton(root, text=self.algebraic, variable=self.equation_type, value=self.algebraic, command=self.choose_equation_type)
         self.alg_radiobutton.grid(row=2, column=2, padx=5)
+        self.alg_radiobutton = tk.Radiobutton(root, text=self.transcendental, variable=self.equation_type, value=self.transcendental, command=self.choose_equation_type)
+        self.alg_radiobutton.grid(row=3, column=2, padx=5)
 
         # Поле для отображения и ввода своего интервала
         self.interval_enabled = tk.BooleanVar() # 0 - программный интервал, 1 - свой интервал
-        self.interval_checkbutton = tk.Checkbutton(root, text="Задать свой интервал.", variable=self.interval_enabled, command=self.input_interval)
+        self.interval_checkbutton = tk.Checkbutton(root, text="Свой интервал", variable=self.interval_enabled, command=self.input_interval)
         self.interval_checkbutton.grid(row=4, column=2, padx=5, pady=5)
         self.interval_entry = tk.Entry(root, width=15, state=tk.DISABLED)
         self.interval_entry.grid(row=5, column=2, padx=5, pady=5)
@@ -53,13 +53,13 @@ class NonlinearEquationSolver:
         # Поле для отображения коэффициентов
         self.coefficients_label = tk.Label(root, text="Коэффициенты уравнения:")
         self.coefficients_label.grid(row=1, column=0, padx=5, pady=5)
-        self.coefficients_entry = tk.Entry(root, width=35)
+        self.coefficients_entry = tk.Entry(root, width=40)
         self.coefficients_entry.grid(row=1, column=1, padx=5, pady=5)
 
         # Поле для отображения использованных элементов
         self.elements_label = tk.Label(root, text="Использованные элементы:")
         self.elements_label.grid(row=2, column=0, padx=5, pady=5)
-        self.elements_entry = tk.Entry(root, width=35)
+        self.elements_entry = tk.Entry(root, width=40)
         self.elements_entry.grid(row=2, column=1, padx=5, pady=5)
 
         # Раскрывающийся список для выбора метода решения
@@ -72,7 +72,7 @@ class NonlinearEquationSolver:
         # Поле для ввода погрешности
         self.error_label = tk.Label(root, text="Погрешность:")
         self.error_label.grid(row=4, column=0, padx=5, pady=5)
-        self.error_entry = tk.Entry(root, width=35)
+        self.error_entry = tk.Entry(root, width=40)
         self.error_entry.grid(row=4, column=1, padx=5, pady=5)
         self.error_entry.insert(0, "0.05")
 
@@ -83,7 +83,7 @@ class NonlinearEquationSolver:
         # Поле для отображения решения
         self.solution_label = tk.Label(root, text="Решение:")
         self.solution_label.grid(row=7, column=0, padx=5, pady=5)
-        self.solution_entry = tk.Entry(root, width=50)
+        self.solution_entry = tk.Entry(root, width=60)
         self.solution_entry.grid(row=7, column=1, padx=5, pady=5)
 
     def choose_equation_type(self):
@@ -122,8 +122,19 @@ class NonlinearEquationSolver:
             self.interval_entry.config(state=tk.NORMAL)
             self.interval_entry.insert(0, "-100, 100")
         else:
+            self.interval_entry.delete(0, tk.END)
             self.interval_entry.config(state=tk.DISABLED)
     
+    def choose_interval(self):
+        if self.interval_entry.get():
+            try:
+                interval_value = list(map(float, self.interval_entry.get().strip().split(',')))
+                return np.array(interval_value)
+            except Exception as e:
+                messagebox.showerror("Ошибка!", "Интервал должен состоять из:"
+                                     + "\n- 2 чисел (рациональные писать через точку);"
+                                     + "\n- значения должны быть разделены запятой.")
+
     def solve_algebraic(self):
         try:
             # Парсинг (подстановка) коэффициентов из уравнения в поля для более удабного решения.
@@ -156,14 +167,7 @@ class NonlinearEquationSolver:
         # Если пользователь решил задать свой интервал.
         range_interval = np.array([-100, 100])
         if self.interval_enabled.get():
-            if self.interval_entry.get():
-                try:
-                    interval_value = list(map(float, self.interval_entry.get().strip().split(',')))
-                    range_interval = np.array(interval_value)
-                except Exception as e:
-                    messagebox.showerror("Ошибка!", "Интервал должен состоять из:"
-                                         + "\n- 2 чисел (рациональные писать через точку);"
-                                         + "\n- значения должны быть разделены запятой.")
+            range_interval = self.choose_interval()
 
         try:
             interval = range_interval
@@ -200,7 +204,7 @@ class NonlinearEquationSolver:
             elif method_str == "Метод секущих":
                 method = Method.secant
             else:
-                raise ValueError("Выбран несуществующий метод вычисления корней! (Скорее всего, он ещё не реализован. :)")
+                messagebox.showerror("Ошибка", "Выбран несуществующий метод вычисления корней! (Скорее всего, он ещё не реализован. :)")
 
             # Вычисление корней.
             result = calculation(f, intervals, tolerance, method)
@@ -217,16 +221,10 @@ class NonlinearEquationSolver:
 
             fig = Figure(figsize = (5, 5), dpi = 100)
 
-            range_interval = [-100, 100]
+            # Если пользователь решил задать свой интервал.
+            range_interval = np.array([-100, 100])
             if self.interval_enabled.get():
-                if self.interval_entry.get():
-                    try:
-                        interval_value = list(map(float, self.interval_entry.get().strip().split(',')))
-                        range_interval = np.array(interval_value)
-                    except Exception as e:
-                        messagebox.showerror("Ошибка!", "Интервал должен состоять из:"
-                                            + "\n- 2 чисел (рациональные писать через точку);"
-                                            + "\n- значения должны быть разделены запятой.")
+                range_interval = self.choose_interval()
             
             x_range = np.linspace(range_interval[0], range_interval[1], 1000)
             
@@ -237,7 +235,10 @@ class NonlinearEquationSolver:
             if self.choose_equation_type() == self.transcendental:
                 x = symbols('x')
                 f = self.solve_transcendental()
-                y = [f.subs(x, i) for i in x_range]
+                try:
+                    y = [f.subs(x, i) for i in x_range]
+                except Exception as e:
+                    messagebox.showerror("Ошибка", "Неверная область определения функции! График невозможно построить.")
 
             plot_f = fig.add_subplot(111)
             plot_f.plot(x_range, y)

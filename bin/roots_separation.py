@@ -75,6 +75,9 @@ def find_sturm_system(coeff: np.ndarray):
         b = sturm_system.get(i-1)
         
         fi = np.polydiv(a, b)[1]
+        if fi.order == 0:
+            sturm_system[i] = fi/abs(fi.c[0]) * -1
+            break
         sturm_system[i] = fi/abs(fi.c[0]) * -1
     
     return sturm_system
@@ -83,7 +86,8 @@ def find_sturm_system(coeff: np.ndarray):
 def sturm_method(fs: dict, interval: np.ndarray):
     roots_amount = {}
     step = 1
-    for i in range(interval[0], interval[1] + step, step):
+    i = interval[0]
+    while i <= interval[1]:
         counter = 0
         previous = float('nan')
         for f in fs.values():
@@ -97,6 +101,7 @@ def sturm_method(fs: dict, interval: np.ndarray):
                 counter += 1
             previous = current
         roots_amount[i] = counter
+        i += step
     
     intervals_with_root = []
     a = float('nan')
