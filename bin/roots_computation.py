@@ -1,26 +1,47 @@
 import numpy as np
+from sympy import symbols, diff
 from method import Method
+
+algebraic = "Алгебраическое"
+transcendental = "Трансцедентное"
 
 min = float('nan') # Минимальное значение производной.
 max = float('nan') # Максимальное значение производной.
+eqtype = ""
 
-def calculation(f: np.poly1d, intervals: list, tolerance, method: Method):
+def calculation(f, intervals: list, tolerance, method: Method, equation_type):
+    global eqtype
+    eqtype = equation_type
     roots = [] # Список для записи корней уравнения
+    print(type(f))
     
     # Цикл по всем интервалам.
     for interval in intervals:
         x = 0 # Корень на интервале.
-        # Выбор метода.
-        if method == Method.bisection:
-            x = bisection(f, interval, tolerance)
-        elif method == Method.simple_iteration:              
-            x = simple_iteration(f, interval, tolerance)
-        elif method == Method.newton:
-            x = newton(f, interval, tolerance)
-        elif method == Method.secant:
-            x = secant(f, interval, tolerance)
-        else:
-            raise Exception("Такого метода нет!")
+        # Выбор метода для алгебраического уравнения.
+        if (eqtype == algebraic):
+            if method == Method.bisection:
+                x = bisection(f, interval, tolerance)
+            elif method == Method.simple_iteration:              
+                x = simple_iteration(f, interval, tolerance)
+            elif method == Method.newton:
+                x = newton(f, interval, tolerance)
+            elif method == Method.secant:
+                x = secant(f, interval, tolerance)
+            else:
+                raise Exception("Такого метода нет!")
+        
+        if (eqtype == transcendental):
+            if method == Method.bisection:
+                x = t_bisection(f, interval, tolerance)
+            elif method == Method.simple_iteration:              
+                x = simple_iteration(f, interval, tolerance)
+            elif method == Method.newton:
+                x = newton(f, interval, tolerance)
+            elif method == Method.secant:
+                x = secant(f, interval, tolerance)
+            else:
+                raise Exception("Такого метода нет!")
         
         roots.append(x) # Добавление посчитанного корня в список корней.
     return roots # Итоговый отображаемый вывод (результат этапа вычисление корней)
@@ -56,7 +77,7 @@ def bisection(f: np.poly1d, interval: np.array, tol):
 def find_min_max_derivative_of(f: np.poly1d, interval: np.array):
     global min
     global max
-    
+  
     f_der = np.polyder(f)
     a = interval[0]
     b = interval[1]
@@ -136,3 +157,67 @@ def secant(f: np.poly1d, interval: np.array, tol):
         x0 = x1
         x1 = x2
     return x1
+
+# Транцедентные уравнения
+# Метод половинного деления.
+def t_bisection(f, interval: np.array, tol):
+    # Концы интервала [a,b].
+    a = interval[0]
+    b = interval[1]
+
+    x = symbols("x")
+    
+    # Проверка интервала на содержание корня.
+    
+    try:
+        f.subs(x, a)
+    except Exception as e:
+        raise e
+
+    if np.sign(f.subs(x, a)) == np.sign(f.subs(x, b)):
+        raise Exception(
+        "Отрезок [a,b] не содержит корня!")
+        
+        
+    # Середина интервала.
+    m = (a + b)/2
+    
+    if np.abs(f.subs(x, m)) < tol:
+        return m # Корень найден.
+    # Сужение интервала.
+    elif np.sign(f.subs(x, a)) == np.sign(f.subs(x, m)):
+        # Случай: m уточняет границу a.
+        # Рекурсия для нового интервала [m, b].
+        return t_bisection(f, np.array([m, b]), tol)
+    elif np.sign(f.subs(x, b)) == np.sign(f.subs(x, m)):
+        # Случай: m уточняет границу b. 
+        # Рекурсия для нового интервала [a, m].
+        return t_bisection(f, np.array([a, m]), tol)
+
+def t_find_min_max_derivative_of(f, interval: np.array):
+    global min
+    global max
+
+    x = symbols("x")
+    f_der = diff(f, x)
+
+    a = interval[0]
+    b = interval[1]
+    h = 0.01 # Шаг (произвольный)
+
+    x0 = a
+    while (x <= b):
+        y = abs(f_der.subs(x, x0))
+
+        if (np.isnan(min) and np.isnan(max)):
+                min = y
+                max = y
+                x0 += h
+                continue
+        
+        if (y < min):
+            min = y
+        if (y > max):
+            max = y
+        
+        x0 += h

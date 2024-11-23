@@ -16,6 +16,10 @@ def method1(coeff: np.ndarray):
 def method2(coeff: np.ndarray):
     if coeff[0] < 0 : coeff * -1
     coeff_negative = np.absolute(coeff[coeff < 0])
+    
+    if len(coeff_negative) == 0:
+        return np.array([])
+    
     a = np.max(coeff_negative)
     m = np.argwhere(coeff < 0)[0].item()
 
@@ -46,6 +50,13 @@ def z(coeff: np.ndarray):
 # Пересечение интервалов из метода 1 и метода 2.
 def intersect_interval(interval1, interval2):
     interval = []
+    if len(interval1) == 0:
+        return interval2
+    elif len(interval2) == 0:
+        return interval1
+    elif len(interval1) == 0 and len(interval2) == 0:
+        raise Exception("Невозможно найти интеварл!")
+
     if (interval1[0] < interval2[0]):
         interval.append(interval1[0])
     else:

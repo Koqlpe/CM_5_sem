@@ -4,6 +4,7 @@ from sympy import sympify, symbols
 
 # Функция для проверки ввода уравнения.
 def validate_equation_input(equation):
+    equation = equation.replace(" ", "")
     if re.match(r'^[x0-9\.\^\+\-\*\(\)]*$', equation):
         return True
     else:

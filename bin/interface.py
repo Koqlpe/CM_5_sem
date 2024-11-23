@@ -170,19 +170,22 @@ class NonlinearEquationSolver:
             range_interval = self.choose_interval()
 
         try:
-            interval = range_interval
+            intervals = range_interval
             
             if self.choose_equation_type() == self.algebraic:
                 coeff = self.solve_algebraic()
                 
                 # Интервал.
                 if not self.interval_enabled.get():
-                    interval = find_interval(coeff)
+                    intervals = find_interval(coeff)
                 
                 # Метод Штурма.
                 roots = find_sturm_system(coeff)
-                intervals = sturm_method(roots, interval)
+                intervals = sturm_method(roots, intervals)
                 print(intervals)
+
+                if len(intervals) == 0:
+                    messagebox.showerror("Ошибка", "Вычисленный или заданный интервал не имеет корней!")
 
                 # Создать полиномиальную функцию.
                 f = np.poly1d(coeff)
@@ -207,7 +210,7 @@ class NonlinearEquationSolver:
                 messagebox.showerror("Ошибка", "Выбран несуществующий метод вычисления корней! (Скорее всего, он ещё не реализован. :)")
 
             # Вычисление корней.
-            result = calculation(f, intervals, tolerance, method)
+            result = calculation(f, intervals, tolerance, method, self.choose_equation_type())
             self.solution_entry.delete(0, tk.END)
             self.solution_entry.insert(0, ", ".join(map(str, result)))
 
