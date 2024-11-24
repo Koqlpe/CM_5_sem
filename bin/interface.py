@@ -76,9 +76,15 @@ class NonlinearEquationSolver:
         self.error_entry.grid(row=4, column=1, padx=5, pady=5)
         self.error_entry.insert(0, "0.05")
 
+        # Интервалы
+        self.intervals_label = tk.Label(root, text="Интервалы:")
+        self.intervals_label.grid(row=6, column=0, padx=5, pady=5)
+        self.intervals_entry = tk.Entry(root, width=60)
+        self.intervals_entry.grid(row=6, column=1, padx=5, pady=5)
+
         # Кнопка для решения уравнения
         self.solve_button = tk.Button(root, text="РЕШИТЬ УРАВНЕНИЕ", command=self.solve_equation)
-        self.solve_button.grid(row=6, column=1, padx=5, pady=5)
+        self.solve_button.grid(row=5, column=1, padx=5, pady=5)
 
         # Поле для отображения решения
         self.solution_label = tk.Label(root, text="Решение:")
@@ -186,6 +192,9 @@ class NonlinearEquationSolver:
 
                 if len(intervals) == 0:
                     messagebox.showerror("Ошибка", "Вычисленный или заданный интервал не имеет корней!")
+
+                self.intervals_entry.delete(0, tk.END)
+                self.intervals_entry.insert(0, ", ".join(map(str, intervals)))
 
                 # Создать полиномиальную функцию.
                 f = np.poly1d(coeff)

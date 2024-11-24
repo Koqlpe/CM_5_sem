@@ -5,8 +5,6 @@ from method import Method
 algebraic = "Алгебраическое"
 transcendental = "Трансцедентное"
 
-min = float('nan') # Минимальное значение производной.
-max = float('nan') # Максимальное значение производной.
 eqtype = ""
 
 def calculation(f, intervals: list, tolerance, method: Method, equation_type):
@@ -75,8 +73,8 @@ def bisection(f: np.poly1d, interval: np.array, tol):
 # Приведение уравнения к итерационному виду по формуле x = x - 2 * f(x)/(max+min)
 # где: min = min|f'(x)|, max = max|f'(x)| 
 def find_min_max_derivative_of(f: np.poly1d, interval: np.array):
-    global min
-    global max
+    min = float('nan') # Минимальное значение производной.
+    max = float('nan') # Максимальное значение производной.
   
     f_der = np.polyder(f)
     a = interval[0]
@@ -99,13 +97,14 @@ def find_min_max_derivative_of(f: np.poly1d, interval: np.array):
             max = y
         
         x += h
+    return min, max
 
-def g(x, f: np.poly1d):
+def g(x, f: np.poly1d, min, max):
     l = 2/(min + max)
     f_der = np.polyder(f)
     if (f_der(x) > 0):
         l *= -1
-    return x + l * f(x)
+    return x + (l * f(x))
     
 def newton_f(x, f: np.poly1d, f_der: np.poly1d):
     return x - (f(x)/f_der(x))
@@ -115,16 +114,18 @@ def secant_f(x0, x1, f: np.poly1d):
 
 # Метод простых интераций.
 def simple_iteration(f: np.poly1d, interval: np.array, tol):
-    find_min_max_derivative_of(f, interval)
+    min, max = find_min_max_derivative_of(f, interval)
     a = interval[0]
     b = interval[1]
-    #h = 0.0001
+
     x0 = (a + b)/2
-    x1 = g(x0, f)
-    delta = (max + min)/(2 * min) * abs(x1 - x0)
-    while (delta < tol):
+    x1 = g(x0, f, min, max)
+    delta = (max - min)/(2 * min) * abs(x1 - x0)
+    while (delta > tol):
+        print((max - min)/(2 * min))
         x0 = x1
-        x1 = g(x0, f)  
+        x1 = g(x0, f, min, max)
+        delta = (max - min)/(2 * min) * abs(x1 - x0)
     return x1
 
 # Метод Ньютона (метод касательных).
@@ -177,7 +178,6 @@ def t_bisection(f, interval: np.array, tol):
     if np.sign(f.subs(x, a)) == np.sign(f.subs(x, b)):
         raise Exception(
         "Отрезок [a,b] не содержит корня!")
-        
         
     # Середина интервала.
     m = (a + b)/2

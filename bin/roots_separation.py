@@ -79,7 +79,8 @@ def find_sturm_system(coeff: np.ndarray):
     
     f = np.poly1d(coeff)
     der = np.polyder(f)
-    sturm_system = {0 : f, 1 : der/der.c[0]}
+    # sturm_system = {0 : f, 1 : der/der.c[0]}
+    sturm_system = {0 : f, 1 : der}
 
     for i in range(2, n):
         a = sturm_system.get(i-2)
@@ -87,9 +88,11 @@ def find_sturm_system(coeff: np.ndarray):
         
         fi = np.polydiv(a, b)[1]
         if fi.order == 0:
-            sturm_system[i] = fi/abs(fi.c[0]) * -1
+            #sturm_system[i] = fi/abs(fi.c[0]) * -1
+            sturm_system[i] = fi * -1
             break
-        sturm_system[i] = fi/abs(fi.c[0]) * -1
+        #sturm_system[i] = fi/abs(fi.c[0]) * -1
+        sturm_system[i] = fi * -1
     
     return sturm_system
 
